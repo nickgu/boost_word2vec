@@ -6,13 +6,14 @@ CC = g++
 CFLAGS = -pthread -O3 -Wall 
 
 # for debug.
-CFLAGS_DEBUG = -lm -pthread -O0 -Wall -g
+#CFLAGS= -lm -pthread -O0 -Wall -g
 
 LIBS= -lm
 
 INCLUDES= -I../include
 
-OBJECTS=word2vec_dict.o
+OBJECTS=word2vec_dict.o term2query_dict.o
+
 TARGETS= word2vec \
 		word2phrase \
 		distance \
@@ -21,7 +22,9 @@ TARGETS= word2vec \
 		word2vec_gsm \
 		word2vec_predict \
 		dump_target_vector \
-		syn0_distance
+		syn0_distance \
+		convert_word2vec_term2query \
+		test_term2query
 
 
 
@@ -39,6 +42,13 @@ word2vec_gsm : word2vec_gsm.cc
 
 word2vec_predict : word2vec_predict.cc $(OBJECTS)
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(INCLUDES)
+
+convert_word2vec_term2query : convert_word2vec_term2query.cc $(OBJECTS)
+	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(INCLUDES)
+
+test_term2query : test_term2query.cc $(OBJECTS)
+	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(INCLUDES)
+
 
 syn0_distance : syn0_distance.cc $(OBJECTS)
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(INCLUDES)

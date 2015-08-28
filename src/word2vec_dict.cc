@@ -8,13 +8,14 @@
  
 /**
  * @file word2vec_dict.cc
- * @author gusimiu(com@baidu.com)
+ * @author nickgu
  * @date 2015/08/24 14:28:29
  * @brief 
  *  
  **/
 
 #include <string>
+#include <cmath>
 
 #include "word2vec_dict.h"
 #include "helper.h"
@@ -46,7 +47,6 @@ void Word2VecDict_t::_clear() {
 
     _word2idx_dict.clear();
 }
-
 
 void
 Word2VecDict_t::load_bin(const char* filename) {
@@ -112,6 +112,7 @@ Word2VecDict_t::predict_neg(const vector<string>& sentence, size_t output_top_N)
             context_vector[i] += _word2vec[IDX(wid, i)];
         }
         context_vector[i] /= float(words_id.size());
+
     }
 
     // finding best match.

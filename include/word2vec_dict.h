@@ -8,7 +8,7 @@
  
 /**
  * @file word2vec_dict.h
- * @author gusimiu(com@baidu.com)
+ * @author nickgu
  * @date 2015/08/24 14:23:41
  * @brief 
  *  

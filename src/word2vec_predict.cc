@@ -48,7 +48,7 @@ int main(int argc, const char** argv) {
 
         size_t selected_N = 100;
         vector<Word2VecDict_t::Result_t> output_list = word2vec_dict.predict_neg(sentence, selected_N);
-        printf("Predict output[%u/%d]:\n", output_list.size(), (int)selected_N);
+        printf("Predict output[%lu/%d]:\n", output_list.size(), (int)selected_N);
         for (size_t i=0; i<output_list.size(); ++i) {
             printf("%s\t%.3f\n", 
                     output_list[i].query.c_str(),
@@ -57,7 +57,6 @@ int main(int argc, const char** argv) {
         }
         printf("\n");
         fflush(stdout);
-
     }
     return 0;
 }
