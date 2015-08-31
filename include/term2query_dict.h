@@ -23,6 +23,9 @@
 #include <stdexcept>
 using namespace std;
 
+#include <Python.h> //包含python的头文件
+
+
 class Term2QueryDict_t {
     public:
         struct Result_t {
