@@ -23,8 +23,8 @@
 #include <stdexcept>
 using namespace std;
 
-#include <Python.h> //包含python的头文件
 
+class LSHIndex_t;
 
 class Term2QueryDict_t {
     public:
@@ -38,7 +38,7 @@ class Term2QueryDict_t {
         ~Term2QueryDict_t ();
 
         // IO.
-        void read(const char* filename);
+        void read(const char* filename, size_t build_lsh_num=0);
         void write(const char* filename);
 
         void set_dim(size_t dim) {
@@ -64,18 +64,18 @@ class Term2QueryDict_t {
         static float dot_dist(float* emb_a, float* emb_b, size_t dim);
 
         bool n_nearest(const string& query, vector<Result_t>& results, size_t output_top_N=20) const;
-        bool n_nearest(const vector<string>& query, vector<Result_t>& results, size_t output_top_N=20) const;
+        bool n_nearest(const vector<string>& terms, vector<Result_t>& results, size_t output_top_N=20) const;
 
         static void debug_vector(const float* vec, size_t dim);
-        static float dot(float* v1, float* v2, size_t dim);
 
     private:
+        LSHIndex_t* _lsh;
+
         size_t _dim;
         map<string, int> _term2idx;
         map<string, int> _query2idx;
         vector<string> _terms;
         vector<string> _querys;
-        
 
         float* _query_embeddings;
         size_t _query_embeddings_buffer_size;
@@ -84,15 +84,6 @@ class Term2QueryDict_t {
         size_t _term_embeddings_buffer_size;
 
         size_t _offset(size_t index) const;
-
-        struct CompareBlock_t {
-            float score;
-            size_t index;
-
-            bool operator< (const CompareBlock_t& o) const {
-                return score > o.score;
-            }
-        };
 };
 
 

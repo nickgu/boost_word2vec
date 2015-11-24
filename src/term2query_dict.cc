@@ -15,10 +15,23 @@
  **/
 
 #include <cmath>
+#include <set>
 #include <algorithm>
+using namespace std;
 
 #include "term2query_dict.h"
 #include "helper.h"
+#include "lsh.h"
+
+static float 
+dot(const float* v1, const float* v2, size_t dim) {
+    float res = 0;
+    for (size_t i=0; i<dim; ++i) {
+        res += v1[i] * v2[i];
+    }
+    return res;
+}
+
 
 void
 _ensure_buffer_size(void** pptr, size_t* psize, size_t ensure_size) {
@@ -56,16 +69,6 @@ Term2QueryDict_t::_offset(size_t index) const {
     return index * _dim;
 }
 
-float 
-Term2QueryDict_t::dot(float* v1, float* v2, size_t dim) {
-    float res = 0;
-    for (size_t i=0; i<dim; ++i) {
-        res += v1[i] * v2[i];
-    }
-    return res;
-}
-
-
 Term2QueryDict_t::Term2QueryDict_t () :
     _query_embeddings(NULL),
     _query_embeddings_buffer_size(0),
@@ -86,7 +89,7 @@ Term2QueryDict_t::~Term2QueryDict_t () {
 
 // IO.
 void 
-Term2QueryDict_t::read(const char* filename) {
+Term2QueryDict_t::read(const char* filename, size_t build_lsh_num) {
     FILE* fd = fopen(filename, "rb");
     if (fd == NULL) {
         throw std::runtime_error(string("open file ") + filename + string(" failed!"));
@@ -162,6 +165,14 @@ Term2QueryDict_t::read(const char* filename) {
     LOG_NOTICE("Load query's embeddings : size=%lu", buffer_size);
 
     fclose(fd);
+
+    // whether to build lsh.
+    if (build_lsh_num == 0) {
+        _lsh = NULL;
+    } else {
+        _lsh = new LSHIndex_t();
+        _lsh->build(build_lsh_num, query_num, _dim, _query_embeddings);
+    }
 }
 
 void 
@@ -319,18 +330,25 @@ Term2QueryDict_t::n_nearest(const string& query, vector<Result_t>& results, size
     }
 
     // finding best match.
-    for (size_t qid=0; qid<query_num(); ++qid) {
-        CompareBlock_t cb;
-        cb.index = qid;
-        cb.score = dot(context_vector, _query_embeddings+_offset(qid), _dim);
-        all_score.push_back(cb);
+    if (_lsh) {
+        _lsh->find_knearest(context_vector, _dim, output_top_N, all_score);
+
+    } else {
+        for (size_t qid=0; qid<query_num(); ++qid) {
+            CompareBlock_t cb;
+            cb.index = qid;
+            cb.score = dot(context_vector, _query_embeddings+_offset(qid), _dim);
+            all_score.push_back(cb);
+        }
+
+        if (output_top_N >= all_score.size()) {
+            sort(all_score.begin(), all_score.end());
+        } else {
+            partial_sort(all_score.begin(), all_score.begin() + output_top_N, all_score.end());
+        }
+
     }
 
-    if (output_top_N >= all_score.size()) {
-        sort(all_score.begin(), all_score.end());
-    } else {
-        partial_sort(all_score.begin(), all_score.begin() + output_top_N, all_score.end());
-    }
     for (size_t i=0; i<output_top_N && i<all_score.size(); ++i) {
         Result_t res;
         res.query = _querys[ all_score[i].index ];
@@ -356,18 +374,24 @@ Term2QueryDict_t::n_nearest(const vector<string>& terms, vector<Result_t>& resul
     }
 
     // finding best match.
-    for (size_t qid=0; qid<query_num(); ++qid) {
-        CompareBlock_t cb;
-        cb.index = qid;
-        cb.score = dot(context_vector, _query_embeddings+_offset(qid), _dim);
-        all_score.push_back(cb);
+    if (_lsh) {
+        _lsh->find_knearest(context_vector, _dim, output_top_N, all_score);
+
+    } else {
+        for (size_t qid=0; qid<query_num(); ++qid) {
+            CompareBlock_t cb;
+            cb.index = qid;
+            cb.score = dot(context_vector, _query_embeddings+_offset(qid), _dim);
+            all_score.push_back(cb);
+        }
+
+        if (output_top_N >= all_score.size()) {
+            sort(all_score.begin(), all_score.end());
+        } else {
+            partial_sort(all_score.begin(), all_score.begin() + output_top_N, all_score.end());
+        }
     }
 
-    if (output_top_N >= all_score.size()) {
-        sort(all_score.begin(), all_score.end());
-    } else {
-        partial_sort(all_score.begin(), all_score.begin() + output_top_N, all_score.end());
-    }
     for (size_t i=0; i<output_top_N && i<all_score.size(); ++i) {
         Result_t res;
         res.query = _querys[ all_score[i].index ];

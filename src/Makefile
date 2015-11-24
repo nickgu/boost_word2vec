@@ -6,10 +6,12 @@ export CC=g++
 #Using -Ofast instead of -O3 might result in faster code, but is supported only by newer GCC versions
 CFLAGS = -pthread -O3 -Wall -fPIC -shared
 
+#DEBUG_CFLAGS= -lm -pthread -O0 -Wall -g
+
 LDFLAGS= -pthread -lm -fPIC
 
 # for debug.
-#CFLAGS= -lm -pthread -O0 -Wall -g
+BIN_FLAGS= -pthread -O3 -Wall 
 
 LIBS= -lm
 
@@ -32,6 +34,7 @@ TARGETS= word2vec \
 		py_term2query_dict.so 
 
 all: $(OBJECTS) $(TARGETS)
+	@echo -e "\033[40;32;1m --> MAKE ALL OVER! <-- \033[0m"
 
 $(OBJECTS): %.o:%.cc
 	@echo -e "\033[40;32;1m --> make : [[" $@ " ]] <-- \033[0m"
@@ -52,13 +55,19 @@ convert_word2vec_term2query : convert_word2vec_term2query.cc $(OBJECTS)
 test_term2query : test_term2query.cc $(OBJECTS)
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(INCLUDES)
 
+sex_filter : sex_filter.cc $(OBJECTS)
+	$(CC) $^ -o $@ $(BIN_FLAGS) $(LIBS) $(INCLUDES)
+
 syn0_distance : syn0_distance.cc $(OBJECTS)
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(INCLUDES)
 
 dump_target_vector : dump_target_vector.cc $(OBJECTS)
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(INCLUDES)
 
-py_term2query_dict.so: py_term2query_dict.cc $(OBJECTS)
+py_term2query_dict.so: py_term2query_dict.cc $(OBJECTS) lsh.cc
+	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $(filter %.cpp %.o %.c %.cc, $^)
+
+py_lsh.so: py_lsh.cc lsh.cc $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $(filter %.cpp %.o %.c %.cc, $^)
 
 word2phrase : word2phrase.c
@@ -71,4 +80,4 @@ compute-accuracy : compute-accuracy.c
 	$(CC) compute-accuracy.c -o compute-accuracy $(CFLAGS) $(LIBS) $(INCLUDES)
 
 clean:
-	rm -rf $(OBJECTS) $(TARGETS)
+	rm -rf $(OBJECTS) $(TARGETS) *~ .*.swp *.pyc ../include/*~ ../include/.*.swp ../include/*.pyc

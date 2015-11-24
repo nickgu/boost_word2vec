@@ -14,6 +14,8 @@
  *  
  **/
 
+#include <Python.h> //包含python的头文件
+
 #include <vector>
 using namespace std;
 
@@ -35,10 +37,11 @@ static PyObject*
 wrapper_read(PyObject *self, PyObject *args) 
 {
     const char* filename = PyString_AsString(PyTuple_GetItem(args, 0));
-    fprintf(stderr, "prepare to load model: [%s]", filename);
+    fprintf(stderr, "prepare to load model: [%s]\n", filename);
 
     Term2QueryDict_t* pmodel = new Term2QueryDict_t();
-    pmodel->read(filename);
+    pmodel->read(filename, 32);
+    //pmodel->read(filename);
     int handler = g_dicts.size();
     g_dicts.push_back(pmodel);
 
