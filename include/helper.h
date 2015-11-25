@@ -131,17 +131,16 @@ class FArray_t {
         }
 
         FArray_t& operator = (const FArray_t& o) {
+            _release();
+
+            _bnum = o._bnum;
             _num = o._num;
             _extend_num = o._extend_num;
-
-            if (_bnum < o._bnum) {
-                if (_bnum>0) {
-                    free(_l);
-                }
-                _bnum = o._bnum;
+            if (_bnum > 0) {
                 _l = (T*)malloc(_bnum * sizeof(T));
+                memcpy(_l, o._l, _num * sizeof(T));
             }
-            memcpy(_l, o._l, _num * sizeof(T));
+
             return *this;
         }
 
@@ -200,11 +199,15 @@ class FArray_t {
 
         void _extend() {
             _l = (T*)realloc(_l, (_bnum + _extend_num) * sizeof(T) );
-            //LOG_NOTICE("r: %p", _l);
             if (_l == NULL) {
                 throw std::runtime_error("extend buffer for FArray failed!");
             }
             _bnum += _extend_num;
+
+            // NOTICE! placement new.
+            for (size_t i=_num; i<_bnum; ++i) {
+                new(_l+i) T();
+            }
         }
 
         void _release() {

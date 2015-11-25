@@ -21,6 +21,7 @@
 using namespace std;
 
 #include "helper.h"
+#include "vec.h"
 
 struct CompareBlock_t {
     float score;
@@ -36,15 +37,18 @@ class LSHIndex_t {
         LSHIndex_t();
         ~LSHIndex_t();
 
-        void build(size_t random_num, size_t query_num, size_t dim, float* vector_buffer);
+        void build(size_t random_num, size_t vector_num, size_t dim, float* vector_buffer_refer);
+        void build(size_t random_num, size_t dim, FArray_t<DenseVector_t>* dense_buffer_refer);
+
         void find_knearest(const float* vec, size_t dim, size_t output_top_N, vector<CompareBlock_t>& results);
 
     private:
         vector<float*> _random_project_vectors;
 
-        size_t   _query_num;
+        size_t   _vector_num;
         size_t   _dim;
         const float* _vector_buffer_refer;
+        FArray_t<DenseVector_t>* _dense_buffer_refer;
 
         vector< vector<CompareBlock_t> > _random_order;
 
