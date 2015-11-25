@@ -83,6 +83,9 @@ LSHIndex_t::build(size_t random_num, size_t vector_num, size_t dim, float* vecto
     return ;
 }
 
+/**
+ * Dense vector version.
+ */
 void 
 LSHIndex_t::build(size_t random_num, size_t dim, FArray_t<DenseVector_t>* dense_vector_refer) {
     _vector_num = dense_vector_refer->size();
@@ -108,6 +111,7 @@ LSHIndex_t::build(size_t random_num, size_t dim, FArray_t<DenseVector_t>* dense_
             CompareBlock_t cb;
             cb.score = (*dense_vector_refer)[qid].dot(v, dim);
             cb.index = qid;
+            //LOG_NOTICE("%d : qid=%d score=%.3f", i, cb.index, cb.score);
 
             order.push_back(cb);
         }
@@ -121,17 +125,23 @@ LSHIndex_t::build(size_t random_num, size_t dim, FArray_t<DenseVector_t>* dense_
 void 
 LSHIndex_t::find_knearest(const float* vec, size_t dim, size_t output_top_N, vector<CompareBlock_t>& results) {
     set<size_t> candidate_set; 
+
+    /* Recall range = [ -max(N*RecallTimes, 200),  max(N*RecallTimes, 200) )*/
     size_t RecallTimes = 32;
-    size_t Range = min(200UL, output_top_N * RecallTimes);
+    int Range = min(200UL, output_top_N * RecallTimes);
     for (size_t i=0; i<_random_project_vectors.size(); ++i) {
         CompareBlock_t probe;
         probe.score = dot(vec, _random_project_vectors[i], dim);
         probe.index = 0;
         
         int pos = lower_bound(_random_order[i].begin(), _random_order[i].end(), probe) - _random_order[i].begin();
-        //fprintf(stderr, "random index %d: pos=%d\n", i, pos);
-        for (size_t idx=max(0UL, pos - Range); 
-                    idx<min(_vector_num, pos + Range); 
+        /*
+        fprintf(stderr, "random index %d: pos=%d, score=%.4f range=[%u, %u)\n", 
+                i, pos, probe.score, max(0, pos-Range), min((int)_vector_num, pos+Range));
+        */
+
+        for (int idx=max(0, pos - Range); 
+                    idx<min((int)_vector_num, pos + Range); 
                     ++idx) 
         {
             candidate_set.insert(_random_order[i][idx].index);
@@ -149,7 +159,10 @@ LSHIndex_t::find_knearest(const float* vec, size_t dim, size_t output_top_N, vec
         if (_vector_buffer_refer!=NULL) {
             cb.score = dot(vec, _vector_buffer_refer + cb.index*_dim, _dim);
         } else {
-            cb.score = (*_dense_buffer_refer)[cb.index].dot(vec, _dim);
+            DenseVector_t& dv = (*_dense_buffer_refer)[cb.index];
+            cb.score = dv.dot(vec, _dim);
+            // NOTICE this.
+            cb.score /= dv.norm2();
         }
         temp_results.push_back(cb);
     }

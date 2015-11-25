@@ -65,7 +65,7 @@ struct VectorDict_t {
             }
         }
         fclose(fp);
-        LOG_NOTICE("LSH Load over. begin to build index.");
+        LOG_NOTICE("LSH Load over |v|=%d. begin to build index.", _vector_pool.size());
 
         _lsh_index.build(aux, _dim, &_vector_pool);
         LOG_NOTICE("LSH build over.");

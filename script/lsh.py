@@ -3,6 +3,7 @@
 # 
 
 import py_lsh
+import sys
 
 class LSHDict:
     def __init__(self, filename, dim, aux_num=50):
@@ -23,7 +24,6 @@ class LSHDict:
 
 
 if __name__ == '__main__':
-    import sys
     if len(sys.argv)!=3:
         print >> sys.stderr, 'Usage:\n\t%s <dense_vector_file> <dim>\n\t\tinput name to search 10-nearest.'
         sys.exit(-1)

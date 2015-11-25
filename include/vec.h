@@ -17,6 +17,8 @@
 #ifndef  __VEC_H_
 #define  __VEC_H_
 
+#include <cmath>
+
 #include <map>
 using namespace std;
 
@@ -59,10 +61,19 @@ struct DenseVector_t {
 
     float dot(const float* o, size_t dim) const {
         float ans = 0;
+        //LOG_NOTICE("|v|=%d", v.size());
         for (size_t i=0; i<v.size(); ++i) {
             ans += o[v[i].index] * v[i].value;
         }
         return ans;
+    }
+
+    float norm2() const {
+        float n2 = 0;
+        for (size_t i=0; i<v.size(); ++i) {
+            n2 += v[i].value * v[i].value;
+        }
+        return sqrt(n2);
     }
 };
 
