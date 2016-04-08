@@ -38,7 +38,10 @@ class Term2QueryDict_t {
         ~Term2QueryDict_t ();
 
         // IO.
-        void read(const char* filename, size_t build_lsh_num=0);
+        void read(
+                const char* filename, 
+                size_t build_lsh_num=0,
+                bool read_query_vector=true);
         void write(const char* filename);
 
         void set_dim(size_t dim) {

@@ -88,9 +88,11 @@ public:
         gettimeofday(&_begin_tv, NULL);
     }
 
-    void end() {
+    float end() {
         gettimeofday(&_end_tv, NULL);
-        _sum += (_end_tv.tv_sec - _begin_tv.tv_sec) + (_end_tv.tv_usec - _begin_tv.tv_usec) * 0.000001f;
+        float diff_time = (_end_tv.tv_sec - _begin_tv.tv_sec) + (_end_tv.tv_usec - _begin_tv.tv_usec) * 0.000001f;
+        _sum += diff_time;
+        return diff_time;
     }
 
     /* return unit : seconds.*/

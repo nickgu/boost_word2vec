@@ -49,6 +49,21 @@ wrapper_read(PyObject *self, PyObject *args)
 }
 
 static PyObject*
+wrapper_read_terms(PyObject *self, PyObject *args) 
+{
+    const char* filename = PyString_AsString(PyTuple_GetItem(args, 0));
+    fprintf(stderr, "prepare to load model: [%s]\n", filename);
+
+    Term2QueryDict_t* pmodel = new Term2QueryDict_t();
+    pmodel->read(filename, 0, false);
+    //pmodel->read(filename);
+    int handler = g_dicts.size();
+    g_dicts.push_back(pmodel);
+
+    return Py_BuildValue("i", handler);//把c的返回值n转换成python的对象
+}
+
+static PyObject*
 wrapper_vector_query(PyObject* self, PyObject* args) {
     Term2QueryDict_t* dict = parse_dict(args);
     if (dict == NULL) {
@@ -309,7 +324,8 @@ wrapper_knearest_terms(PyObject* self, PyObject* args) {
 // 3 方法列表
 static PyMethodDef Term2QueryDict_Func[] = {
     // 读取文件到词典，可选是否是内存结构
-    { "read", wrapper_read, METH_VARARGS, "load models.\n\t\tpy_term2query_dict.load(file)"},
+    { "read", wrapper_read, METH_VARARGS, "load models.\n\t\tpy_term2query_dict.read(file)"},
+    { "read_terms", wrapper_read_terms, METH_VARARGS, "load models (only terms).\n\t\tpy_term2query_dict.read_terms(file)"},
 
     // get vectors.
     { "vector_query", wrapper_vector_query, METH_VARARGS, "get vector of query."},

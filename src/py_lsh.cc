@@ -31,37 +31,60 @@ struct VectorDict_t {
 
     void read(const char* filename, int dim, int aux) {
         FILE* fp = fopen(filename, "r");
-        vector<string> fields;
         vector<DenseVector_t> vectors;
         LOG_NOTICE("Try to create lsh(dim=%d) on file (%s)", dim, filename);
 
         _dim = dim;
         char line[10240];
         int lc = 0;
+        Timer tm;
+        tm.begin();
         while (fgets(line, sizeof(line), fp) != NULL) {
             line[strlen(line)-1] = 0;
-            split(line, "\t", fields);
-
-            if (fields.size()==2) {
-                vector<string> inner_fields;
-                split( (char*)fields[1].c_str(), ",", inner_fields );
-                DenseVector_t dv;
-
-                for (size_t i=0; i<inner_fields.size(); ++i) {
-                    int idx;
-                    float value;
-                    sscanf(inner_fields[i].c_str(), "%d:%f", &idx, &value);
-                    dv.push_back(idx, value);
+            const char* name = line;
+            char* vstr = NULL;
+            for (int i=0; line[i]; ++i) {
+                if (line[i] == '\t') {
+                    line[i] = 0;
+                    vstr = line + i + 1;
+                    break;
                 }
-
-                _key2idx[fields[0]] = _names.size();
-                _names.push_back(fields[0]);
-                _vector_pool.push_back( dv );
             }
+            if (vstr == NULL) {
+                continue;
+            }
+
+            DenseVector_t dv(256);
+            char* pre = vstr;
+            char* pre_v = vstr;
+            for (int i=0; vstr[i]; ++i) {
+                if (vstr[i] == ':') {
+                    vstr[i] = 0;
+                    pre_v = vstr+i+1;
+                }
+                if (vstr[i] == ',') {
+                    vstr[i] = 0;
+
+                    int idx = atoi(pre);
+                    if (idx<0 || idx>=dim || pre_v == pre) {
+                        continue;
+                    }
+                    float value = atof(pre_v);
+                    dv.push_back(idx, value);
+
+                    pre = vstr + i + 1;
+                    pre_v = vstr + i + 1;
+                }
+            }
+
+            _key2idx[name] = _names.size();
+            _names.push_back(name);
+            _vector_pool.push_back( dv );
 
             lc += 1;
             if (lc % 100000 == 0) {
-                LOG_NOTICE("LSH load %d line(s)", lc);
+                float cost_time = tm.end();
+                LOG_NOTICE("LSH load %d line(s) timer=%.3f(s) qps=%.2f", lc, cost_time, lc *1. / cost_time);
             }
         }
         fclose(fp);

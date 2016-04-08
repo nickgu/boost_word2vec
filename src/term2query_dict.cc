@@ -89,7 +89,12 @@ Term2QueryDict_t::~Term2QueryDict_t () {
 
 // IO.
 void 
-Term2QueryDict_t::read(const char* filename, size_t build_lsh_num) {
+Term2QueryDict_t::read(
+        const char* filename, 
+        size_t build_lsh_num, 
+        bool read_query_vector
+    ) 
+{
     FILE* fd = fopen(filename, "rb");
     if (fd == NULL) {
         throw std::runtime_error(string("open file ") + filename + string(" failed!"));
@@ -134,19 +139,21 @@ Term2QueryDict_t::read(const char* filename, size_t build_lsh_num) {
     fread(buffer, query_buffer_size, 1, fd);
     p = buffer;
     end = buffer + query_buffer_size;
-    id = 0;
-    _query2idx[p] = id++;
-    _querys.push_back(p);
-    while (p < end) {
-        if (*p == '\0') {
-            if (p+1<=end) {
-                _query2idx[p + 1] = id++;
-                _querys.push_back(p + 1);
+    if (read_query_vector) {
+        id = 0;
+        _query2idx[p] = id++;
+        _querys.push_back(p);
+        while (p < end) {
+            if (*p == '\0') {
+                if (p+1<=end) {
+                    _query2idx[p + 1] = id++;
+                    _querys.push_back(p + 1);
+                }
             }
+            p ++;
         }
-        p ++;
+        LOG_NOTICE("Load querys num=%lu(%lu) buffer_size=%lu", query_num, this->query_num(), query_buffer_size);
     }
-    LOG_NOTICE("Load querys num=%lu(%lu) buffer_size=%lu", query_num, this->query_num(), query_buffer_size);
     delete [] buffer;
 
     size_t buffer_size;
@@ -159,11 +166,12 @@ Term2QueryDict_t::read(const char* filename, size_t build_lsh_num) {
 
     // load query's embeddings.
     buffer_size = sizeof(float) * _dim * query_num;
-    _query_embeddings = (float*)malloc(buffer_size);
-    _query_embeddings_buffer_size = buffer_size;
-    fread(_query_embeddings, buffer_size, 1, fd);
-    LOG_NOTICE("Load query's embeddings : size=%lu", buffer_size);
-
+    if (read_query_vector) {
+        _query_embeddings = (float*)malloc(buffer_size);
+        _query_embeddings_buffer_size = buffer_size;
+        fread(_query_embeddings, buffer_size, 1, fd);
+        LOG_NOTICE("Load query's embeddings : size=%lu", buffer_size);
+    }
     fclose(fd);
 
     // whether to build lsh.

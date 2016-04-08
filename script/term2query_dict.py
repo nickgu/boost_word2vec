@@ -4,6 +4,13 @@
 
 import py_term2query_dict
 
+class Term2Query_TermDict_t:
+    def __init__(self, filename):
+        self.__handler = py_term2query_dict.read_terms(filename)
+
+    def vector_terms(self, terms):
+        return py_term2query_dict.vector_terms(self.__handler, terms)
+
 class Term2Query_Dict_t:
     def __init__(self, filename):
         self.__handler = py_term2query_dict.read(filename)

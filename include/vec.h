@@ -39,6 +39,10 @@ struct IndValue_t {
 struct DenseVector_t {
     FArray_t<IndValue_t> v;
 
+    DenseVector_t(size_t alloc = 128):
+        v(alloc)
+    {}
+
     void push_back(size_t ind, float value) {
         IndValue_t iv(ind, value);
         v.push_back(iv);
